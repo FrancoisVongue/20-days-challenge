@@ -6,14 +6,14 @@ res.setHeader('Content-Type', 'application/json')
 ```
 
 ## Basic routing
-`req.url` property contains relative path to the resource from the domain.
+`req.url` property contains relative path from the domain.
 
 ## Express
 the main feature of express for node developer is it's built in `router`
 By switching to express we can take advantage of its router which simplifies development.
 
 By calling `res.json()`, express will automatically send
-the correct Content-Type header and stringify our response body for us.
+the correct Content-Type header (app/json) and stringify our response body for us.
 
 `req.query` - represents query parameters from the path (/?name=value)
 
@@ -37,7 +37,7 @@ For real time communication (e.g messaging app) you can use `server sent Events`
 
 ## setting up project
 1. setup npm with npm init
-2. setup express with npm i express
+2. setup express with `npm i express`
 3. setup eslint
 
 ```js
@@ -61,7 +61,7 @@ app.listen(port, () => {
     Resource is a representation of something.
     
 2. Define paths to resources
-    URL paths should be structured and only define what resource should be accessed.
+    URL paths should be structured and only define `what` resource should be accessed.
     www.xxx.addTour - bad path, because it contains a `verb`
     
 3. Define what you want to do with resources with `http verbs`
@@ -73,7 +73,7 @@ To get resources that are "part" of another resource:
     Meaning all the state should be handled on the `client` and not on the server
 
 ## Handling requests with Express
-You can compose responses according to JSend spec. Which is a spec that controls 
+You can compose responses according to `JSend` spec. Which is a spec that controls 
 how you should structure your responses.
 
 1. GET request
@@ -96,7 +96,7 @@ how you should structure your responses.
     ```js
     app.post(`/api/v1/tours`, (req, res) => {
         const newId = tours[tours.length - 1].id + 1;
-        const newTour = Object.assign({id: newId}, req.body);
+        const newTour = Object.assign({id: newId}, req.body); // note req.body
         tours.push(newTour);
 
         fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`,
@@ -116,7 +116,7 @@ how you should structure your responses.
     To make a parameter `optional` add a question mark to it like this (/:smth?)
     ```js
     app.get(`/api/v1/tours/:id`, (req, res) => {
-        const tour = tours.find(t => t.id == req.params.id);
+        const tour = tours.find(t => t.id == req.params.id); // note req.params.id
 
         if(tour) res.status(201).send({ status: `success`, data: { tour } })
         else res.status(404).send({ status: 'fail' })
@@ -184,9 +184,9 @@ app.use((req, res, next) => {
 ```
 -
                                     **Note**
-In custom middleware when you send a response, you have to return after that.
+In custom middleware when you send a response, you have to `return` after that.
 If code will reach the call to `next()` function after you have returned a response
-to a client you will get an error.
+to a client you will get an `error`.
 
 ## 3rd party middleware
 `Morgan` - logging middleware => npm i morgan
@@ -212,7 +212,7 @@ app.route(`api/v1/users/:id`)
 ```
 
 **Note** in `postman` you can create collections (you know it) and in collections
-you can create folders (may be useful to create a different folder for different model)
+you can create `folders` (may be useful to create a different folder `for different model`)
 
 ## Code structure +
 You may want to divide `different routes for different resources`.
@@ -221,40 +221,41 @@ And different directories for routes and functions that are called by the routes
 1. You need to create one separate `router` for each resource.
     ```js
     const tourRouter = express.Router(); // one router for one resource
-    tourRouter.route(`/`) // use the router instead of app
+    tourRouter.route(`/tours/`) // use the router instead of app
         .get(getTours)
         .post(postTour);
 
-    tourRouter.route(`/:id`)
+    tourRouter.route(`/tours/:id`)
         .get(getTour)
         .delete(deleleTour)
         .patch(patchTour);
 
-    app.use(`/api/v1/tours`, tourRouter); // when mounting route to the app, you can 
-                                        // supply the base path
+    app.use(`/api/v1/`, tourRouter); // when mounting route to the app, you should 
+                                        // supply the base domain path
     ```
     Router is a `middleware` so you can easily moun it to your app with
     `app.use(someRouter)`
     You just define a router and then assign
-    `different http verbs` and relative `paths` for that router
+    `different http verbs with middlewares` and relative `paths` for that router
     The process of mounting the router to the app is called `mounting the router`.
 
-2. It may be easier to remember is you imagine that router is an ASP.NET `controller`
+2. It may be easier to remember if you imagine that router is an ASP.NET `controller`
     that contains the base path. 
-    And different verbs with different relative paths are just `actions`.
+    And different verbs with different relative paths are `actions`.
 
 3. Separate different routers into different files
     1. Create another folder called `Routes`
-    2. In that folder create distinct file for each model and call them `modelRoute`.
-    3. In every "route" file define express.Router's and assign functions to them.
+    2. In that folder create distinct file for each model and call them `ModelName`.
+    3. In every "route" file define `express.Router` and assign functions to them.
     4. Export the routers and import them in app.js.
+    
     This way you can have different routers for some specific base path and 
     some custom middleware for all requests in your app.js file.
     
 4. Create another folder where you will store `functions`, and call it `actions`.
-    1. Create different files for different models like this: `modelActions`
+    1. Create different files for different models like this: `ModelName`
     2. Put all request handlers in there
-    3. Import the actions into routers to use.
+    3. Export the actions for routers to use.
 
 5. Create another file in the root folder called `server.js`
     1. import `app` from app.js
@@ -263,14 +264,15 @@ And different directories for routes and functions that are called by the routes
     This file will be resposible for things like:
         1. Database configuration
         2. Error handling
-        3. Env. vars
+        3. Env. vars setup
         4. etc
 
 6. Create an npm script for running your app
     ```npm
     npm scripts>
-        node server.js
+        start: node server.js
     ```
+<!-- here -->
 
 ## Param middleware - special type of middleware
 Is a type of middleware that `only runs` when we have special parameters in `URL`
@@ -423,48 +425,434 @@ npm i
 ```
 
 
+# ▶ Day 2
+# Mongo
+`Collection` is like a "table" of data.
+Collections can contain `documents` which represent "rows" in RDBs.
+
+1. Main features
+    1. Stores data in documents.
+    2. Easily `scalable`
+    3. Flexible => you can change schema without migrations
+    4. `Performant` due to indexing, sharding and many more.
+    5. Free and open source
+
+    In mongo you can have:
+        1. `Multiple` values per field (store arrays)
+        2. `Embedded` documents, which happens by the process called `denormalizing`
+
+2. Installing MongoDB
+    1. Install community server
+    2. Create a directory for mongoDB to store data
+        1. On a disk where you have installed mongo create a folder `data`
+        2. In "data" folder create another folder called `db`
+        3. Go to `program files/mongo/server/bin`
+        4. Execute `mongod.exe` => this will start the server
+        5. To connect to the server, you will need to start `mongo.exe`
+        6. In the shell that has opened, write `db` to list databases, 
+            you should get "test" in return.
+        7. Add mongod to the PATH
+            environment variables > system variables > find `PATH` > add `"lalala/bin"` of 
+                mongo to that variable
+                
+3. Creating a Local database
+    1. type `mongo` in cmd
+    2. create a database with a `use` command
+        use dbName
+        This command is also used to switch to an existing database.
+    3. Each `db` has `collections` that in turn have `documents`
+    4. To insert a document into a collection of some database you need to do:
+        **Note** tours is a collection, you need to specify it before you insert a doc
+        because any document must be in some collection
+        `db.tours.insertOne({ name: "the forest hiker", price: 299 })`
+    5. To see the document you have just created
+        `db.tours.find()`
+    6. To see the databases you have created => `show dbs`
+    7. To quit shell => `quit()`
+
+4. Creating documents in mongoDB
+    1. To create multiple documents at the same time
+        `db.tours.insertMany([{name: "some name 1"}, {name: "some name 2"}])`
+        The function takes an `array of objects`.
+
+5. Querying a database
+    1. Get all
+        `db.tours.find()`
+    2. Get those which have specific, exact property value
+        `db.tours.find({ name: "the forest hiker" })`
+    3. Pass predicate
+        `db.tours.find({ price: {$lte: 500} })`
+        Predicates are passed `as an object` with the property that
+        starts with the `dollar sign` and has some value.
+    4. Multiple predicates at the same time
+        `db.tours.find({ price: {$lt: 500}, rating: {$gt: 3.9 } })`
+        Just separate them with a comma.
+    5. One of multiple predicates
+        `db.tours.find({ $or [price: {$lt: 500}, rating: {$gt: 3.9 }] })` 
+        It should be the `$or` operator which value is an `array of predicates`.
+    6. Map the output 
+        `db.tours.find(SOME_FILTER_ABOVE, {name: 1})` 
+        name: 1 => means that you are only `interested in name fields` of 
+        the objects you get as a result of applying filter.
+
+6. Updating documents
+    `db.tours.updateOne(FILTER_OBJECT, {$set : {price: 433}})`
+    if filter returns multiple objs, only the first one will be updated.
+    
+    Set accepts an object that may have multiple parameters.
+    (in this case it has only one). If the object that is affected 
+    by the query doesn't have the property, it will be added.
+    
+    `Why set`? Why not just pass an object? It's because `there are other`
+    useful `operators` like increment, decrement, etc.
+
+    `updateMany` to update multiple documents.
+    
+    `replaceOne/Many` to completery replace documents with new doc.
+
+7. Deleting documents
+    `db.tours.deleteMany(FILTER_OBJECT)`
+    It returns documents that were deleted
+    
+    `db.tours.deleteMany({})` => delete ALL
+
+8. Using compass for CRUD
+    You can connect to the local database by following the steps:
+        1. Run the server
+        2. Run compass
+        3. Choose to fill fields individually to connect
+        4. Connect
+    It's easy to do CRUD operations with compass.
+    You can allso click `options` in compass to add projection/filtering/sorting
+    
+9. Creating a remote database with Atlas
+    Atlas takes all the pain of managing and scaling a database aways from us.
+
+    1. Create free account
+    2. Create a cluster
+    2. Create a project
+
+10. Connecting to remote database
+    1. Click connect in your cluster
+    2. Add your ip and mongo user credentials
+    3. Save credentials in your `config.env`
+    4. Choose the connection method
+        It should give you the `connection string`.
+    5. If you choose **compas**:    
+        1. Click `connect to` from top left menu
+        2. Choose to fill fields individually
+        3. Paste password and connect
+        4. You will have preconfigured databases but you should `create a new one` 
+            and call it as you like.
+        5. Fill in `database and collection`(remember collection = table) names
+        6. Congratulations! You can go to the collection and insert your first document.
+            You can go to your collection on the website and see what you have added 
+        8. You added your ip address for security, but if you want to access
+            the db from another computer you may want to `allow all ip's` to access
+            your database.
+            1. Click `network access`
+            2. Edit
+            3. allow access from everywhere
+            
+    6. If you choose **mongoshell**
+        1. Go back to cluster on the website
+        2. Click connect
+        3. Choose "connect with the mongo shell"
+        4. Copy the connection string
+        5. Paste the connections stirng into the terminal `don't forget to paste db name`
+            `mongo "mongodb+srv://natours-3w9fv.mongodb.net/Natours" --username francois`
+        6. Insert password from the database
+        7. Woila!
+        8. show dbs => lists all databases you have
+
+# Mongoose
+## Connect express to the mongoDB
+1. Go to the website
+2. Click cluster
+3. Click connect => connect your application
+4. Copy the connection string and fill the dbname and password
+    (or you can substitute the passwords `programmatically`)
+5. Create env var in config.env with the connection string
+
+Connections string for `local` database is simple:
+    `mongodb://localhost:27017/<dbname>`
+
+After connectiong to the database you should install a `database driver`.
+```cli
+npm i mongoose
+```
+
+Then connect to the database usign `mongoose.connect`
+```js
+// in server.js
+const dotenv = require('dotenv');       // first env vars
+dotenv.config({ path: './config.env' });
+
+const mongoose = require('mongoose');
+const DBCS = process.env.DBSTRING.replace('<PASS>', process.env.DBPASS);
+
+mongoose.connect(DBCS, {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: false
+}).then(connection => {
+    //console.log(connection.connections);
+    console.log(`Connected to the database: success!`);
+});
+```
+
+Note, "mongoose.connect" returns a promise which contains `connection` object 
+with different useful properties. If there is an error while connecting
+to the database, you can always `catch` it with .catch or try_catch.
+
+## Creating a model with mongoose
+`Model` is like a class in OOP, a 'blueprint' for further objects(rows).
+We create models `to create documents` from it.
+
+To create a model you need a `schema`.
+Schema is used to describe a model.
+
+When describing model's properties, mongoose allows you to use `native JS type objects`
+as types.
+```js
+const tourSchema = new mongoose.Schema({
+    name: { // instead of a type you can specify an object with OPTIONS
+        type: String,
+        required: [true, "A tour must have a name"],
+        unique: true
+    },
+    rating: Number,
+    price: Number
+});
+
+const Tour = mongoose.model('Tour', tourSchema); // m - little, not capital in "model"
+```
+
+## Creating documents and testing the Model
+Now you can create `instances` from you model, by calling the model with the `new` 
+operator. 
+```js
+const testTour = new Tour({
+    name: "The Forest Hiker",
+    rating: 4.4,
+    price: 400
+});
+```
+`Instances` have mehtods on them that allow you to interact with the database.
+```js
+testTour
+    .save() // save document(instance) to the database
+    .then(tour => console.log(`successfully saved the tour named ${tour.name}`))
+    .catch(e => console.error(`Error: ${e}`));
+
+```
+
+## Architecture
+1. Application vs Business logic
+    Applications logic is logic that concerns `implementation` of something.
+        - how to get something from the database
+        - how to sort somethign efficiently
+        
+    Business logic is about what the `meaning` of an action
+        - what does it mean to register (what is needed for that)
+        - what does it mean a "valid" user
+        - what does it mean to pay the bill
+
+    There's a philisophy called `fat model thin controller` that means that 
+    you should offload as much logic as possible to the model and leave 
+    controllers as small as possible.
+
+2. Refactorign into MVC
+    1. We must already have `routes` and `actions` separated.
+    2. Create a `Models` folder
+    3. This folder shouls contain both the `schema` and `model` of mongoose.
+    4. You should only export the model.
+    5. Import the model into Actions if you need
+
+## Another way to create documents
+```js
+// instead of 
+const newTour = new Tour({/*...*/})
+newTour.save();
+
+// we can do the following
+Tour.create({/*...*/});
+```
+
+**Note** to use async/await with eslint you may want to set node version in your 
+package.json
+```json
+root {
+    engines {
+        node : ">=10.0.0"
+    }
+}
+```
+
+**Note** properties of the object that you want to add to the database
+`that are not in the schema`, will be completely ignored on save or Model.create.
+and won't be saved in the database.
+
+```js
+// part of the Tour Actions file.
+const {Tour} = require('../Models/Tour');
+
+const createTour = async (req, res) => {
+    try {
+        const tour = await Tour.create(req.body);
+        res.status(200).json({status: "success", data: tour});
+    }
+    catch(e) {
+        res.status(400).json({status: "failed", data: e.message});
+    }
+};
+```
+
+## Reading the documents
+You can use `find` method `on a Model` to look for differnt documents.
+```js
+const getAllTours = async (req, res) => {
+    try {
+        const tours = await Tour.find();
+
+        res.status(200).json({
+            status: `success`,
+            data: tours,
+            dataLength: tours.length
+        })
+    }
+    catch (e) {
+        res.status(404).json({status: `failed`, message: e.message});
+    }
+};
+```
+
+```js
+const getTour = (req, res) => {
+    try {
+        const tour = Tour.findById(req.params.id); // note findBY ID
+
+        res.status(200).json({
+            status: 'success',
+            data: tour
+        });
+    }
+    catch(e) {
+        res.status(404).send("Not found");
+    }
+};
+```
+When you want to get `a single file` you should use `findById` as it's indexed
+and therefore faster. 
+
+## Updating documents
+```js
+const updateTour = async (req, res) => {
+    try {
+        const tour = await Tour
+            .findByIdAndUpdate(req.params.id, req.body, { // findByIdAndUpdate
+                new: true,          // return updated document
+                runValidators: true // validate after update
+            });
+
+        res.status(200).json({
+            status: 'success',
+            data: tour
+        });
+    } catch(e) {
+        res.status(404).send("Not found");
+    }
+};
+```
+**Note** it's simultaneously find and update : `findByIdAndUpdate` it `takes`
+    - id
+    - object with properties to set
+    - options object
+
+## Deleting Documents
+```js
+const deleteTour = async (req, res) => {
+    try{
+        let tour = await Tour.findByIdAndDelete(req.params.id); // note findByIdAndDelete
+
+        res.status(200).json({
+            status: 'success',
+            data: tour
+        });
+    } catch (e) {
+        res.status(404).send("Not found");
+    }
+};
+```
+
+# Modelling the app
+## Adding more properties and constraints
+```js
+summary: {
+    type: String,
+    trim: true // automatically removes whitespace on the sides
+    required: [true, "Summary is requred"]
+},
+createdAt: {
+    type: Date,
+    default: Date.now(), // sets the date automatically
+},
+startDates: {
+    type: [Date], // an ARRAY of Dates
+}
+```
+
+## Creating scrip to import data from a file
+```js
+const fs = require('fs');
+const {Tour} = require('../../Models/Tour');
+const dotenv = require('dotenv');
+dotenv.config({ path: `${__dirname}/../../config.env` });
+
+const mongoose = require('mongoose');
+const DBCS = process.env.DBSTRING.replace('<PASS>', process.env.DBPASS);
+
+mongoose.connect(DBCS, {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: false
+}).then(_ => {
+    //console.log(connection.connections);
+    console.log(`Connected to the database: success!`);
+});
+
+let tours = fs.readFileSync(`${__dirname}/tours.json`, 'utf-8');
+tours = JSON.parse(tours);
+const importTours = async (tours) => {
+    try{
+        console.log(tours);
+        const addedTours = await Tour.create(tours);
+        console.log(`Data has been successfully imported`);
+    } catch(e) {
+        console.log(`Error occured while importing from json: ${e}`);
+    }
+};
+
+if([...process.argv].some(param => param == '-d')) // contains parameters 
+    Tour.deleteMany({})
+        .then(_ => console.log(`Current data has been successfully deleted`));
+if ([...process.argv].some(param => param == '-i'))
+    importTours(tours);
+```
+
+You can pass parameters to node like this `node app --param`, and access them
+via `process.argv` which is an array of parameters.
+
+To delete all tours we used `Tour.deleteMany({})`
+To import tours we used `Tour.create(tours)` method that can receive both
+single model as well as an `array` of models
+
+**Note**
+For better `autocompletion` in Webstorm use the following package
+    - npm install --save-dev @types/express
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<!-- 094 better filtering -->
 
 
 
