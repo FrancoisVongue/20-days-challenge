@@ -272,14 +272,13 @@ And different directories for routes and functions that are called by the routes
     npm scripts>
         start: node server.js
     ```
-<!-- here -->
 
 ## Param middleware - special type of middleware
 Is a type of middleware that `only runs` when we have special parameters in `URL`
 
 E.g you can write a middleware that will only run when there's an `id` parameter in URL.
 You can create a param middleware by calling `param` instead of "route" on the 
-router object and passing to the function a callback with `four` paramers, the last
+router object and passing to the function a callback with `four` parameters, the last
 one is value of the parameter.
 ```js
 // modelRoutes.js file, router = express.Router()
@@ -318,7 +317,7 @@ router.route(`/`)
     .post(validateTour, postTour);
 
 // in another file, in Acitons directory
-const validateTour = (req, res, next) => {
+const validateTour = (req, res, next) => { // middleware 
     let keys = new Set(Object.keys(req.body));
     if(keys.has('name') && keys.has('price')) {
         next();
@@ -336,7 +335,7 @@ app.use(express.static(`${__dirname}/public`)); // to serve files from the publi
                                                 // that is located in your root folder.
 ```
 
-Then to access the file you need to access `domain/rpf` where rpf is the relative
+Then to access the file you need to access `domain/rpf` where `rpf` is the relative
 path from public directory to the file, inluding the file name.
 
 ## Env variables
@@ -346,7 +345,7 @@ Env var is not about express so you should configure them in `server.js`
 To get environment you can type
 ```js
 app.get('env'); // return the string that represents the environment
-                // by default it's "development"
+                // by default it's "development" and is stored in env var NODE_ENV
 ```
 
 "env" only tells you what environment you are running your program in.
@@ -362,7 +361,7 @@ when you start the app.
 ```cli
 NODE_ENV=development node server.js
 ```
-But when you need to set multiple environment variables you will need a distinct 
+But when you need to set `multiple` environment variables you will need a distinct 
 file specifically for env vars.
 
 `Uppercase` is a convention for environment variables.
@@ -385,6 +384,9 @@ file specifically for env vars.
     // app.js
     if(proccess.env.NODE_ENV == "development" )
         app.use(morgan('dev')); 
+        
+    // or 
+    app.use(morgan(process.env.LOGGING)); 
     ```
 
 5. Port fron env vars
@@ -398,7 +400,7 @@ file specifically for env vars.
     inappropriately. `Always call app after` you have set up env vars with `dotenv`.
 
 To run the app with different environments (not env vars), you can setup 
-the npm like `this`:
+npm like `this`:
 ```json
 "scripts": {
     "start:dev": "node server.js",
@@ -457,8 +459,8 @@ Collections can contain `documents` which represent "rows" in RDBs.
                 
 3. Creating a Local database
     1. type `mongo` in cmd
-    2. create a database with a `use` command
-        use dbName
+    2. create a database with the `use` command
+        `use dbName`
         This command is also used to switch to an existing database.
     3. Each `db` has `collections` that in turn have `documents`
     4. To insert a document into a collection of some database you need to do:
@@ -508,7 +510,7 @@ Collections can contain `documents` which represent "rows" in RDBs.
 
     `updateMany` to update multiple documents.
     
-    `replaceOne/Many` to completery replace documents with new doc.
+    `replaceOne/Many` to completely replace documents with new doc.
 
 7. Deleting documents
     `db.tours.deleteMany(FILTER_OBJECT)`
@@ -530,7 +532,7 @@ Collections can contain `documents` which represent "rows" in RDBs.
 
     1. Create free account
     2. Create a cluster
-    2. Create a project
+    3. Create a project
 
 10. Connecting to remote database
     1. Click connect in your cluster
@@ -538,7 +540,7 @@ Collections can contain `documents` which represent "rows" in RDBs.
     3. Save credentials in your `config.env`
     4. Choose the connection method
         It should give you the `connection string`.
-    5. If you choose **compas**:    
+    5. If you choose **compass**, in compass:
         1. Click `connect to` from top left menu
         2. Choose to fill fields individually
         3. Paste password and connect
@@ -616,7 +618,7 @@ When describing model's properties, mongoose allows you to use `native JS type o
 as types.
 ```js
 const tourSchema = new mongoose.Schema({
-    name: { // instead of a type you can specify an object with OPTIONS
+    name: { // instead of a type you can specify OPTIONS
         type: String,
         required: [true, "A tour must have a name"],
         unique: true
@@ -625,7 +627,7 @@ const tourSchema = new mongoose.Schema({
     price: Number
 });
 
-const Tour = mongoose.model('Tour', tourSchema); // m - little, not capital in "model"
+const Tour = mongoose.model('Tour', tourSchema); // m - small, not capital in "model"
 ```
 
 ## Creating documents and testing the Model
@@ -644,23 +646,23 @@ testTour
     .save() // save document(instance) to the database
     .then(tour => console.log(`successfully saved the tour named ${tour.name}`))
     .catch(e => console.error(`Error: ${e}`));
-
 ```
 
 ## Architecture
 1. Application vs Business logic
     Applications logic is logic that concerns `implementation` of something.
         - how to get something from the database
-        - how to sort somethign efficiently
+        - how to sort something efficiently
         
-    Business logic is about what the `meaning` of an action
+    Business logic is about the `meaning` of an action
         - what does it mean to register (what is needed for that)
         - what does it mean a "valid" user
         - what does it mean to pay the bill
 
     There's a philisophy called `fat model thin controller` that means that 
     you should offload as much logic as possible to the model and leave 
-    controllers as small as possible.
+    controllers as small as possible. This way you can make your servers more performant.
+    E.g `don't do sorting or filtering` on the server, let DB do that.
 
 2. Refactorign into MVC
     1. We must already have `routes` and `actions` separated.
@@ -688,9 +690,8 @@ root {
     }
 }
 ```
-
 **Note** properties of the object that you want to add to the database
-`that are not in the schema`, will be completely ignored on save or Model.create.
+`that are not in the schema`, will be completely `ignored` on save or Model.create.
 and won't be saved in the database.
 
 ```js
@@ -743,7 +744,7 @@ const getTour = (req, res) => {
 };
 ```
 When you want to get `a single file` you should use `findById` as it's indexed
-and therefore faster. 
+and therefore `faster`. 
 
 ## Updating documents
 ```js
@@ -802,7 +803,7 @@ startDates: {
 }
 ```
 
-## Creating scrip to import data from a file
+## Creating script to import data from a file
 ```js
 const fs = require('fs');
 const {Tour} = require('../../Models/Tour');
@@ -825,9 +826,7 @@ let tours = fs.readFileSync(`${__dirname}/tours.json`, 'utf-8');
 tours = JSON.parse(tours);
 const importTours = async (tours) => {
     try{
-        console.log(tours);
         const addedTours = await Tour.create(tours);
-        console.log(`Data has been successfully imported`);
     } catch(e) {
         console.log(`Error occured while importing from json: ${e}`);
     }
@@ -847,12 +846,570 @@ To delete all tours we used `Tour.deleteMany({})`
 To import tours we used `Tour.create(tours)` method that can receive both
 single model as well as an `array` of models
 
-**Note**
-For better `autocompletion` in Webstorm use the following package
-    - npm install --save-dev @types/express
+# ▶ Day 3
+# Making API Better
+## Filtering
+Allowing a user to filter data with a query string.
+To access query parameters you can use `req.query` which is an object that
+contains parameters and their values.
+
+Simple way of filtering
+```js
+const tours = await Tour.find({
+    ...req.query
+});
+```
+
+More sophisticated way, which you should use more often as it gives you `more control`
+and more different funcitons (not only equal)
+```js
+const tours = await Tour
+    .find()                                         // first just find
+    .where('duration').equals(req.query.duration)   // then something like LINQ
+    .where('difficulty').equals(req.query.difficulty);
+```
+`where` and `equals` are both methods of a `Query` object of mongoose.
+You can look up documentation on that.
+
+On top of that they perform equally well
+
+Another way that you may want to use is filtering the query itself into a new obj
+```js
+let query = {...req.query}; // new object from query
+let extraQuery = ['page', 'sort', 'limit', 'fields'];
+extraQuery.forEach(ext => delete query[ext]); // filtering the new query object properties
+```
+
+## Advanced filtering
+When you want to specify for example greater that opeartor, on the client 
+it looks like this: `tours?duration[gte]=5`, which transforms into the following 
+req.query = `{duration: { gte: 5 }}`
+
+`But` for this query to work with mongoose it should be `$gte` instead of just gte
+```js
+let queryStr = JSON.stringify(query);
+queryStr = queryStr
+    .replace(/\b(gte|lte|gt|lt)\b/g, match => `$${match}`); // \b - word boundary
+                                                            //g - global
+query = JSON.parse(queryStr);
+const tours = await Tour.find(query); // and now it works
+```
+
+## Sorting
+Client Queries : 
+    1. `?sort=property`
+    2. `?sort=-property` (ascending order)
+    3. `?sort=property1,-property2` (sortBy, thenBy)
+    
+Server receives a string like this (`req.query.sort` is equal to):
+    1. `property`
+    2. `-property` (ascending order)
+    3. `property1,-property2` (sortBy, thenBy)
+    
+To make it work with mongoose all you need is `replace comma with a space`
+```js
+let dbQuery = Tour.find(query); // query to mongo, WITHOUT await
+
+if(req.query.sort){
+    const sortBy = req.query.sort.replace(',', ' '); // replace comma
+    dbQuery = dbQuery.sort(sortBy);                 // append sorting to query
+}
+
+const tours = await dbQuery; // and then you AWAIT
+```
+
+## Filtering Fields
+Client Queries : 
+    - `?fields=duration,price`  - choose fields to return
+    
+To `permanently remove` a property from the result on the `schema level`:
+```js
+// in a schema
+createdAt: {
+    type: Date,
+    default: Date.now(),
+    select: false  // <-------- select: false
+},
+```
+
+To `map` response
+```js
+if(req.query.fields){
+    const getOnly = [...req.query.fields]
+                .map(v => v === ',' ? ' ' : v)
+                .join('');      // commas into spaces (`replace` replaces only the FIRST)
+    dbQuery = dbQuery.select(getOnly); // mongoose's SELECT methods
+} else {
+    dbQuery = dbQuery.select('-__v'); // excluding the fields
+}
+```
+
+## Pagination
+Client Queries : 
+    - `?page=2&limit=10`  - choose fields to return
+
+You have two mongoose methods for pagination
+    1. `skip()` - skip first N
+    2. `limit()` - amount
+    
+```js
+let {page = 1, limit = 10} = req.query; // X = N -> default value
+const skip = (page-1) * limit;
+
+// if skipped too many
+if(skip > await Tour.countDocuments()) // Note Model.countDocuments() method
+    throw new Error('Skipped too many pages'); // throw an error
+
+dbQuery = dbQuery
+    .skip((skip)
+    .limit(+limit); // convert limit to number
+```
+
+## Providing alias for frequent routes
+Create middleware that will `set query paramters for user`
+
+```js
+// in Aliases file
+const topFiveTours = (req, res, next) => {
+    req.query = {
+        sort: 'rating',
+        limit: '5',
+        fields: 'name,difficulty,summary'
+    };
+    next();
+}
+module.exports = {topFiveTours};
 
 
-<!-- 094 better filtering -->
+// in Tour file that is in Routes directory
+const Aliases = require('./Aliases');
+//...
+router.route('/top5')
+    .get(Aliases.topFiveTours, getAllTours); // FIRST call the alias
+```
+
+# ▶ Day 4
+# Refactoring API features
+At the time we have `too much of functionality` in a single method. Get all tours 
+hadndles not only getting the tours but also parsing every possible query and 
+structuring data accordingly.
+
+Furthermore in case you want to parse it in some other place you would need to `copy`
+all the logic from this method to another, which violates one of the most important
+rules of coding - DRY. 
+
+We gonna create a `distinct class` for every feature that we gonna use throughtout 
+our api (sorting, filtering, pagination, etc), call it `APIResult` and place it into
+`Utils` folder that will be located in the root directory.
+
+This class will receive a query from client : `req.query` as `query`
+and a query to the database to `pipe onto` : `Model.find()` as `dbQuery`
+
+```js
+// APIResult in Utils
+class APIResult {
+    constructor(dbQuery, query) {  // note constructor
+        this.query = query;
+        this.dbQuery = dbQuery;
+    }
+    
+    Result() {
+        return this.dbQuery; // result returns the current query for awaiting
+    }
+    
+    OnlyProperties() {
+        if(this.query.fields){
+            const getOnly = this.query.fields.split(',').join(' ');
+            this.dbQuery = this.dbQuery.select(getOnly);
+        } else {
+            this.dbQuery = this.dbQuery.select('-__v'); // note ADDING to dbQuery
+        }
+        
+        return this; // <---- note return THIS for PIPING
+    }
+    
+    Filter() {
+        let query = {...this.query};
+        let extraQuery = ['page', 'sort', 'limit', 'fields'];
+        extraQuery.forEach(ext => delete query[ext]);
+
+        let queryStr = JSON.stringify(query);
+        queryStr = queryStr
+            .replace(/\b(gte|lte|gt|lt)\b/g, match => `$${match}`);
+        query = JSON.parse(queryStr);
+
+        this.dbQuery = this.dbQuery.find(query);
+        
+        return this;
+    }
+    //...
+}
+
+
+// in Model Actions 
+const {APIResult} = require('../Util/APIResult');
+//...
+const getAllTours = async (req, res) => {
+    try {
+        const resultQuery = new APIResult(Tour.find(), req.query); // note parameters
+        const tours = await resultQuery
+            .Filter()                                   // note piping
+            .OnlyProperties()
+            .Pagination()
+            .Sort()
+            .Result();
+
+        res.status(200).json({
+            status: `success`,
+            data: tours,
+            dataLength: tours.length
+        })
+    }
+    catch (e) {
+        res.status(404).json({status: `failed`, message: e.message});
+    }
+};
+```
+
+## Aggregation pipeline
+Is a `mongoDB framework` for data aggregation.
+
+We define a pipeline that all documents `from a certain collections go through`
+in order to transform them into `aggregated results`.
+
+E.g it may be used to calculate averages, minimum or max. values.
+
+1. Create another function in your actions.
+```js
+const getTourStats = async (req, res) => {
+    try {
+        const stats = Tour.aggregate() // note the aggregate function
+```
+
+2. To that function you have to pass an `array of steps` that you want to be performed
+    on every model. Every step is a distinc object. (complete list can be found in
+    mongodb documentation)
+
+```js
+const stats = await Tour.aggregate([            // note await
+    {
+        $match: { 'ratingsAverage' : { $gte: 4.5 }}
+    },
+    {
+        $group: {
+            _id: null,              // grouping by some property, in this case NONE
+            avgRating: { $avg: '$ratingsAverage'}, // calculate average for a group
+            avgPrice: { $avg: '$price' },       // avgPrice is a new Property, price 
+            minPrice: { $min: '$price' },       // is a property from a Model
+            maxPrice: { $max: '$price'  },      // note dollar in front of price
+            numRatings: { $sum: '$ratingsQuantity' }, // [1]
+            num: { $sum: 1 } // 1 will be added to the sum for every document
+        }
+    }
+]);
+```
+
+[1] it will add ratingsQuantity (which is a number) to the `numRatings` stats property
+    for every document in the `group`.
+
+3. To `group` by some property you need to specify a property to group by.
+    ```js
+    $group: {
+        _id: '$difficulty',    // grouping by difficulty, _id is the id of THE GROUP
+        avgRating: { $avg: '$ratingsAverage'}, // calculate average for a group
+        avgPrice: { $avg: '$price' },       // avgPrice is a new Property, price 
+        minPrice: { $min: '$price' },       // is a property from a Model
+        maxPrice: { $max: '$price'  },      // note dollar in front of price
+        numRatings: { $sum: '$ratingsQuantity' }, // [1]
+        num: { $sum: 1 } // 1 will be added to the sum for every document
+    }
+    ```
+
+4. To `sort`
+    ```js
+    {
+        $sort: { avgRating: 1 } // specify the property and the 1 or 0 (asc/desc)
+    }
+    ```
+    Note that depending on the order in the pipeline you may have access to
+    different properties to sort by. In this case you had a grouping above so in this case
+    `you only have access` to the properties that were defined in that group
+
+
+5. `Match` again, don't forget, you can `repeat` diferent aggregation objects, i.e
+    you may want to repeat match. But note the properties that you can access.
+    ```js
+    {
+        $match: { '_id' : { $ne: 'easy' }} // $ne - not equal
+    }
+    ```
+    In the case above you just filtered out the group with id "easy".
+    
+
+6. Example: finding the most busy months in an array of tours that have starting dates.
+    1. We need to count amount of tours for every single month. We are going to use an
+        `unwind` mehtod which will create a  `distinct document` for every value in
+        an array of some value of that document
+            ```js
+            let someDoc = {name: 'aviato', someVal: [val1, val2]};
+            ```
+            In this case it will create two distinct documents, both with 
+            the name `aviato` for every value in the `someVal` array. Result:
+            ```js
+            doc1 = {name: 'aviato', someVal: val1};
+            doc2 = {name: 'aviato', someVal: val2};
+            ```
+            So now we `have distinct tour for every date` => result
+            
+    2. Now we need to match the correct year, let's use `match` for that 
+        ```js
+        const plan = await Tour.aggregate([
+            {
+                $unwind: '$startDates'
+            },
+            {
+                $match: { 
+                    startDates: { 
+                        $gte: new Date(`${year}-01-01`),
+                        $lte: new Date(`${year}-12-31`)
+                    }
+                }
+            }
+        ]);
+        ```
+    3. Then we need to `group` by months, but how can we do that considering 
+        we don't have months of tours but only dates? 
+        We will need a special operator that you can find in the documentation.
+        They are called `Aggregation pipeline operators`
+        The one we are going to use here is called `$month`
+        
+        But then after we have them, how do we get the name of all aff them per month?
+        We would like to create an `array` of all the names that we have in group,
+        to do that we `have to use` another operator, as we can't just pass an array
+        This operator is called `$push`, which creates an array from some property
+        ```js
+        $group: {
+            _id: { $month: `$startDates` },
+            numOfTours: { $sum: 1 },
+            tours: { $push: `$name` }
+        }
+        ```
+    4. Final result
+        ```js
+        const plan = await Tour.aggregate([
+            {
+                $unwind: '$startDates'
+            },
+            {
+                $match: { 
+                    startDates: { 
+                        $gte: new Date(`${year}-01-01`),
+                        $lte: new Date(`${year}-12-31`)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: `$startDates` },
+                    numOfTours: { $sum: 1 },
+                    tours: { $push: `$name` }
+                }
+            },
+            {
+                $sort: {
+                    numOfTours: -1
+                }
+            },
+            {
+                $addFields: { month: `$_id` } // add aliases to fields and more
+            },
+            {
+                $project: { _id: 0 }   // allows you to add or remove fields from result
+            },
+            {
+                $limit: 1  // get only the most busy month
+            }
+        ]);
+        ```
+
+# Advanced Modelling
+## Virtual properties
+Virtual properties are the fields that you define on the model schema but which
+`won't be persisted in db`.
+
+They make sence when you don't wont to store some properties
+`that can be direved from other properties`
+
+To set a virtual property on a schema you need to call it's `virtual` method
+which takes just the name of the property you want to add. They you need to
+pipe the `get` getter method for the property.
+
+By default, virtual properties are `neither` persisted nor returned from a query.
+To get the property on "get" you need to specify `options` in schema constructor.
+```js
+const tourSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, "A tour must have a name"],
+        unique: true,
+        trim: true
+    },
+    /* ... */
+}, { // schema options
+    toJSON: {virtuals: true},
+    toObject: {virtuals: true}
+});
+
+tourSchema
+    .virtual('durationWeeks')
+    .get(function() {   // < ------- GETTER for the property
+        return (this.duration / 7).toFixed(2); 
+    });
+```
+
+**Note**, you `can't` use virtual properties in `queries`.
+
+<!-- 104 -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
