@@ -7,6 +7,7 @@ res.setHeader('Content-Type', 'application/json')
 
 ## Basic routing
 `req.url` property contains relative path from the domain.
+`req.originalURL` - full path with domain
 
 ## Express
 the main feature of express for node developer is it's built in `router`
@@ -23,9 +24,6 @@ app.get('/static/*', respondStatic)
 ```
 asterisk signifies the whole left path.
 
-## Real time
-For real time communication (e.g messaging app) you can use `server sent Events`
-
 # Express >>>
 ## Postman
 1. download postman
@@ -36,9 +34,8 @@ For real time communication (e.g messaging app) you can use `server sent Events`
     3. give the request some structured name (like: fine new item)
 
 ## setting up project
-1. setup npm with npm init
+1. setup npm with `npm init`
 2. setup express with `npm i express`
-3. setup eslint
 
 ```js
 const express = require('express');
@@ -121,7 +118,7 @@ how you should structure your responses.
         if(tour) res.status(201).send({ status: `success`, data: { tour } })
         else res.status(404).send({ status: 'fail' })
     })
-    ``` 
+    ```
 
 4. PATCH requests
     ```js
@@ -175,7 +172,7 @@ These middleware functions will apply to every request.
 
 The `order` of middleware matters.
 
-You can `set properties` on the req object for use in later middlewares.
+You can `set properties` on the req object for use in later middleware.
 ```js
 app.use((req, res, next) => {
     req.requestTime = new Date().toISOString();
@@ -210,9 +207,9 @@ app.route(`api/v1/users/:id`)
     .patch(updateUser)
     .delete(deleteUser);
 ```
-
 **Note** in `postman` you can create collections (you know it) and in collections
 you can create `folders` (may be useful to create a different folder `for different model`)
+
 
 ## Code structure +
 You may want to divide `different routes for different resources`.
@@ -240,7 +237,7 @@ And different directories for routes and functions that are called by the routes
     The process of mounting the router to the app is called `mounting the router`.
 
 2. It may be easier to remember if you imagine that router is an ASP.NET `controller`
-    that contains the base path. 
+    that contains the base path to some model.
     And different verbs with different relative paths are `actions`.
 
 3. Separate different routers into different files
@@ -316,14 +313,13 @@ router.route(`/`)
     .get(getTours)
     .post(validateTour, postTour);
 
-// in another file, in Acitons directory
+// in another file, in Actions directory
 const validateTour = (req, res, next) => { // middleware 
-    let keys = new Set(Object.keys(req.body));
-    if(keys.has('name') && keys.has('price')) {
+    let {name, price} = req.body;
+    if(name && price) 
         next();
-    } else {
+    else 
         res.status(400).send("Invalid request body");
-    }
 };
 ```
 
@@ -336,7 +332,7 @@ app.use(express.static(`${__dirname}/public`)); // to serve files from the publi
 ```
 
 Then to access the file you need to access `domain/rpf` where `rpf` is the relative
-path from public directory to the file, inluding the file name.
+path `from public` directory to the file, inluding the file name.
 
 ## Env variables
 In `app.js` you should do everything that is only relevant to `express`
@@ -348,7 +344,7 @@ app.get('env'); // return the string that represents the environment
                 // by default it's "development" and is stored in env var NODE_ENV
 ```
 
-"env" only tells you what environment you are running your program in.
+`env` only tells you what environment you are running your program in.
 Environment is stored in enviroment variable. And there `a lot of environment variables`.
 
 To see all environment variables you can use this property
@@ -378,6 +374,9 @@ file specifically for env vars.
     dotenv.config({ path: './config.env' }); // this add all the variables from the file
                                             // to node env vars
     ```
+    You need this package `because` variables in config.env are not environmental, they
+    are just text and this package sets environment variables of your system 
+    accordingly to this file.
 
 4. E.g to add logging only in `development` environment
     ```js
@@ -403,7 +402,7 @@ To run the app with different environments (not env vars), you can setup
 npm like `this`:
 ```json
 "scripts": {
-    "start:dev": "node server.js",
+    "start": "node server.js",
     "start:prod": "NODE_ENV=production node server.js"
     // last one doesn't work on windows, need to use cross-env package
     /*
@@ -1090,7 +1089,7 @@ const getTourStats = async (req, res) => {
     on every model. Every step is a distinc `object`. (complete list can be found in
     mongodb documentation)
 
-<!-- here -->
+
 ```js
 const stats = await Tour.aggregate([            // note await
     {
@@ -1239,11 +1238,11 @@ const stats = await Tour.aggregate([            // note await
 Virtual properties are the fields that you define on the model schema but which
 `won't be persisted in db`.
 
-They make sence when you don't wont to store some properties
+They make sence when you don't want to store some properties
 `that can be direved from other properties`
 
 To set a virtual property on a schema you need to call it's `virtual` method
-which takes just the name of the property you want to add. They you need to
+which takes just the name of the property you want to add. Then you need to
 pipe the `get` getter method for the property.
 
 By default, virtual properties are `neither` persisted nor returned from a query.
@@ -1281,7 +1280,7 @@ Hook is to be defined `on the schema`.
 
 1. First type is `document hook`
     It runs before `.save()` and `.create()` command,
-    but `not` for insertMany
+    but `not` for insertMany or any other
     
     In the callback function you have access to `this` which points to the `document`
     ```js
@@ -1296,7 +1295,7 @@ Hook is to be defined `on the schema`.
     Finish result
     ```js
     tourSchema.pre('save', function(next) {
-        this.slug = slugify(this.name, {lower: true});
+        this.slug = slugify(this.name, {lower: true}); //
         
         next(); // don't forget to call next
     });
@@ -1310,7 +1309,7 @@ Hook is to be defined `on the schema`.
     Document middleware can `also` run for validate, init and remove.
 
 2. Second type - `query middleware`, they allow us to run actions before/after
-    `a certain query` is executed. The difference between query and find hooks is in 
+    `a certain query` is executed. The difference between query and document hooks is in 
     the string you are passing to the `pre/post` functions.
     Now, `this` will point to the query, instead of the document.
     ```js
@@ -1393,6 +1392,8 @@ name: {
 },
 
 difficulty: {
+    type: String,
+    required: [true, 'A tour must have a difficulty'],
     enum: {                                                 // enum for strings
         values:['easy', 'medium', 'difficult'],
         message: 'Difficulty can only be easy, medium or difficult',
@@ -1414,16 +1415,18 @@ priceDiscount: {
     type: Number,
     validate: {
         validator: function(value) {
-            // this is the doc (works only for NEW documents)
+            // "this" is the doc ("this" works only for NEW documents)
             // fixing this is cumbersome and is not worth it
-            return value < this.price;
+            return value < this.price; // this.price => access to another field
         },
-        message: 'Discount price should be less than the price, current value - {VALUE}'
+        // {VALUE} is the value of the property
+        message: 'Discount price should be less than the price, invalid value - {VALUE}'
     }
 },
 ```
 
 Popular npm package for `string` validation is called `validator`.
+But you can use default mongoose validators in most cases.
 
 # Error handling with express >>>
 ## Debugging node.js
@@ -1436,7 +1439,7 @@ Then add new script to your `npm package`
 "debug": "ndb server.js"
 ```
  
-This package opens your project in a special chrome-like window, in which
+This package opens your project in a `special chrome-like window`, in which
 you can make changes.
 
 1. Setting up `breakpoints`
@@ -1465,12 +1468,13 @@ To fix this we need to create a route that will catch everything that `was not c
 by any other route. To do that we just have to create a route that will be executed
 `last`, that why we put it in the `bottom of` the middleware `pipeline`.
 ```js
+// all = any verb, * = any path
 app.all('*', (req, res, next) => {
     res.status(404).json({
         status: 'fail',
         message: `Can't find ${req.originalUrl} on this server :(`
     });
-});         // right before the export
+});         
 
 module.exports = app; 
 ```
@@ -1486,6 +1490,7 @@ There are two types of errors: `Operational errors` and `Programming errors`.
         - invalid route access
     There problems are `not` about `bugs in our code` but rather, bad external conditions.
     (bad user, bad server, bad connection)
+    We should strive to make all possible errors in our app operational.
 
 2. Programming errors
     Actual `bugs` that are difficult to track and debug.
@@ -1500,47 +1505,302 @@ of errors in your app from different places.
 This kind of error handling is nice as it allows you to `separate` error handling
 from actual business logic in your code.
 
-## Implementing global error handling middleware <113>
+# ▶ Day 6
+## Implementing global error handling middleware 
+Express comes with error handlers out of the box. You just need to create an
+error handling middleware, this middleware has four arguments: error, res, req and next.
+
+`But` when you have a single middleware for handling all types of errors, you
+can't know what `status code` should you send to the client.
+
+You can create an error in your middleware as well as statusCode and status.
+This way you create an error in your middleware but `not handle it`.
+After that you call next() but with an `error argument`.
+
+Next receives a parameter, this parameter is an `error`. Whatever you pass to next(), is
+assumed to be an error. So when you pass an error, all the middlewares are `skipped`
+but not error middleware.
+
+Result:
+```js
+app.all('*', (req, res, next) => {
+    const error = new Error(`Can't find ${req.originalUrl} on this server`);
+    error.status = 'fail';
+    error.statusCode = 404;
+
+    next(error);
+})
+
+app.use((err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
+    res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message
+    })
+});
+```
+
+But passing multiple properties to the error object may be cumbersome, so it might 
+be better to create `your own error class`.
+
+## Creating a custom Error class and refactoring
+We need to create an error class that will exted the base Error class and have
+properties that we want. Also it should specify whether the error is `operational` or not.
+Because we don't want client to know about error that occured because of a bug in 
+our system, we only want to know what we have prepared for them and no more.
+
+This class should also allow us to capture the `stack trace` so that we could know 
+where the error happened.
+`Note` you can access error's stack trace with the `stack` error property.
+
+```js
+class AppError extends Error {
+    constructor(message, statusCode) {
+        super(message);
+        this.statusCode = statusCode;
+        this.status = statusCode < 500 ? 'fail' : 'error';
+        this.isOperational = true;
+
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+module.exports = AppError;
+```
+
+```js
+//errorHandlir (teachert told me to put it in Actions)
+const errorHandler = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
+    res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message
+    });
+};
+
+module.exports = errorHandler;
+```
+
+```js
+// app.js
+app.all('*', (req, res, next) => {
+    const error = new AppError(`Can't find ${req.originalUrl}`, 404);
+    next(error);
+});
+
+app.use(errorHandler);
+```
+
+## Catching errors in a single function
+For now we have multiple actions, and each action handles erros by itself.
+So we want `to get try/catch out of actions and put it in one specialized place`.
+
+So we should create a function that does just that and place it inside our 
+`Utils` folder.
+```js
+// in tourActions.js that is in Actions directory
+module.exports = {
+    createTour: catchAsync(createTour),
+    updateTour: catchAsync(updateTour),
+    deleteTour: catchAsync(deleteTour),
+    getTour: catchAsync(getTour),
+    getAllTours: catchAsync(getAllTours),
+    getTourStats: catchAsync(getTourStats),
+    getMonthPlan: catchAsync(getMonthPlan),
+}
 
 
+// catchAsync.js
+const catchAsync = fn => (req, res, next) => {
+    fn(req, res).catch(next);
+}
 
+module.exports = catchAsync;
 
+// that's how actions look like now
+const createTour = async (req, res) => {
+    const tour = await Tour.create(req.body); // note, no try/catch
+    res.status(200).json({status: "success", data: tour});
+};
+```
 
+## Adding 404 not found
+For now if something goes wrong we get 500 internale error. Which is not what we want.
+To make errors meaningful we need to `throw them inside our actions`.
 
+```js
+// inside an Action method
+const tour = await Tour.findById(req.params.id);
+if(tour == null) {
+    throw new AppError(`Tour with id ${req.params.id} does not exist`, 404);
+}
+```
 
+- **So, as of now** we have the following `architecture`:
+    1. We have async methods that throw `custom erorrs`.
+    2. We have a wrapper method, which `modifies` every other async method
+        in such a way that it `redirects` errors into some 
+        `central custom error handling middleware.`
+    3. We have custom middleware that handles custom errors the way we like it to.
 
+## Errors in development vs production
+You probably want to see more meaningful errors when you develop the program and
+don't want the client to see the same errors in production.
 
+And **remember** we only want to send to the client the errors `that are operational`.
+```js
+// in Actions/errorActions.js
+const operError = (err, res) => {
+    res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message
+    });
+}
+const devError = (err, res) => {
+    if(err.isOperational) {
+        operError(err, res);
+    } else {
+        res.status(err.statusCode).json({
+            status: err.status,
+            message: err.message,
+            stackTrace: err.stack,
+            error: err
+        });
+    }
+}
+const prodError = (err, res) => {
+    if(err.isOperational){
+        operError(err, res);
+    } else {
+        console.error(err);
+        res.status(err.statusCode).json({
+            status: 'error',
+            message: 'Something went wrong!'
+        });
+    }
+}
 
+const errorHandler = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
 
+    if(process.env.NODE_ENV == 'development' ) {       // different responce for dif. env.
+        devError(err, res); 
+    } else if (process.env.NODE_ENV == 'production') { // different responce for dif. env.
+        prodError(err, res);
+    }
+};
+```
 
+## Handling "invalid database ID" error
+When user tries to access an invalid id, it won't get any meaningful feedback in
+production. We need to `make` this type of error `operational`.
 
+Same with validation errors (at this point they are not operational and can only
+be seen in development environment.)
 
+That's how easy it is to make it:
+```js
+const prodError = (err, res) => {
+    let appError = err;
+    
+    if(err.isOperational)
+        return operError(appError, res);
+    
+    switch (err.name) {  // just make a SWITCH on error name, and define 
+        case 'CastError': // operational error on any name you want
+            appError = new AppError(`Invalid ${err.path}: ${err.value}`, 400);
+            return operError(appError, res);
+        
+        default:
+            appError = new AppError(`Something went wrong :(`, 500);
+            return operError(appError, res);
+    }
+}
+```
+You can get error `names` from docs or just by experimenting. 
 
+## Handling "Duplicate field" error
+This will creates a little problem as it `doesn't have a name`.
+It doesn't have a name because it isn't a mongoose error but rather 
+MongoDB error. So to identify the error we are going to use `code` property instead.
 
+So here we have done some little refactoring (switch true)
+```js
+switch (true) {
+    case err.name == 'CastError':
+        appError = new AppError(`Invalid ${err.path}: ${err.value}`, 400);
+        return operError(appError, res);
+        
+    case err.code == 11000:
+        let property = err.errmsg.split('"')[1]; // get the property
+        appError = new AppError(`Duplicate property: ${property}`, 400);
+        return operError(appError, res);
+    
+    default:
+        appError = new AppError(`Something went wrong :(`, 500);
+        return operError(appError, res);
+}
+```
 
+## Handling Mongoose's validation errors
+We have multiple `properties` in error object.
+Every some property corresponds to the property that ruined validation.
+You wanna take these properties and create a single string out of it.
 
+```js
+case err.name == 'ValidationError':
+    let error = Object.values(err.errors) // get error messages for every property
+        .reduce((b,v) => b + v.message + ', ', ''); // and combine them
+    appError = new AppError(`Invalid input data: ${error}`, 400);
+    return operError(appError, res);
+```
 
+## Errors outside of Express: Promise Rejections
+E.g your database doesn't work. You need to have some way of handling these errors.
+Database is outside of your express app so no middleware will catch them.
 
+When your database doesn't work you get `unhandled promise rejection`, 
+which you can easily fix, by adding `.catch` to your mongoose connection.
 
+But you may want to handle this type of error `globally`.
 
+When an unhandled rejection happens, the process object emits an `event` called
+`UnhandledRejection`, so we can easily subscribe to the event and handle it 
+as it occurs.
+```js
+const server = app.listen(port, () => { // SAVE THE SERVER INTO A VARIABLE
+    console.log(`app running at port: ${port}, in environment: ${process.env.NODE_ENV}`);
+});
 
+process.on('unhandledRejection', err => { // note 'unhandledRejection' and process.on
+    console.error(err.name, err.message);
+    console.log("Unhandled rejection! Shutting down the server...");
+    server.close(() => { // PROPER WAY OF CLOSING AN APP
+        process.exit(1); // givers server time to finish ongoing requests
+    });
+});
+```
 
+This way wherever in the app async error occurs it will be handled by 
+this event listener.
 
+## Errors outside of Express: Synchronous Rejections (Uncaught Exceptions)
+we can listen to `process.uncaughtException` this time, but everything else is 
+the same.
 
+Although you do have these central error handling listeners, you `shouldn't rely on them`
+It's just there in case you missed something occasionally, but in general
+you should really `handle` error and not just rely on there listeners that
+will shut down your server.
 
+**Note** this synchronoue listener should be put on `top` of ther server.js file
+as it needs to listen `before` any error occurs.
 
-
-
-
-
-
-
-
-
-
-
-
-
+**Note** sync error that occur inside of express middleware are handled by
+error handling middleware.
 
 
 
