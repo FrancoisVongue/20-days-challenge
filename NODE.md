@@ -26,7 +26,7 @@ asterisk signifies the whole left path.
 ## Real time
 For real time communication (e.g messaging app) you can use `server sent Events`
 
-# Express
+# Express >>>
 ## Postman
 1. download postman
 2. use postman to test your api
@@ -567,7 +567,7 @@ Collections can contain `documents` which represent "rows" in RDBs.
         7. Woila!
         8. show dbs => lists all databases you have
 
-# Mongoose
+# Mongoose >>>
 ## Connect express to the mongoDB
 1. Go to the website
 2. Click cluster
@@ -861,7 +861,7 @@ const tours = await Tour.find({
 ```
 
 More sophisticated way, which you should use more often as it gives you `more control`
-and more different funcitons (not only equal)
+and more different functions (not only equal)
 ```js
 const tours = await Tour
     .find()                                         // first just find
@@ -935,9 +935,9 @@ createdAt: {
 To `map` response
 ```js
 if(req.query.fields){
-    const getOnly = [...req.query.fields]
-                .map(v => v === ',' ? ' ' : v)
-                .join('');      // commas into spaces (`replace` replaces only the FIRST)
+    const getOnly = req.query.fields
+        .split(',')
+        .join(' ');      // commas into spaces (`replace` replaces only the FIRST)
     dbQuery = dbQuery.select(getOnly); // mongoose's SELECT methods
 } else {
     dbQuery = dbQuery.select('-__v'); // excluding the fields
@@ -958,7 +958,7 @@ const skip = (page-1) * limit;
 
 // if skipped too many
 if(skip > await Tour.countDocuments()) // Note Model.countDocuments() method
-    throw new Error('Skipped too many pages'); // throw an error
+    throw new Error('Skipped too many pages'); // throw an error (actually you shouldn't)
 
 dbQuery = dbQuery
     .skip((skip)
@@ -990,7 +990,7 @@ router.route('/top5')
 
 # ▶ Day 4
 # Refactoring API features
-At the time we have `too much of functionality` in a single method. Get all tours 
+At the time we have `too much of functionality` in a single method. `getAllTours`
 hadndles not only getting the tours but also parsing every possible query and 
 structuring data accordingly.
 
@@ -1003,7 +1003,7 @@ our api (sorting, filtering, pagination, etc), call it `APIResult` and place it 
 `Utils` folder that will be located in the root directory.
 
 This class will receive a query from client : `req.query` as `query`
-and a query to the database to `pipe onto` : `Model.find()` as `dbQuery`
+and a query to the database to `pipe onto` : `<Model>.find()` as `dbQuery`
 
 ```js
 // APIResult in Utils
@@ -1087,9 +1087,10 @@ const getTourStats = async (req, res) => {
 ```
 
 2. To that function you have to pass an `array of steps` that you want to be performed
-    on every model. Every step is a distinc object. (complete list can be found in
+    on every model. Every step is a distinc `object`. (complete list can be found in
     mongodb documentation)
 
+<!-- here -->
 ```js
 const stats = await Tour.aggregate([            // note await
     {
@@ -1232,6 +1233,7 @@ const stats = await Tour.aggregate([            // note await
         ]);
         ```
 
+# ▶ Day 5
 # Advanced Modelling
 ## Virtual properties
 Virtual properties are the fields that you define on the model schema but which
@@ -1269,31 +1271,236 @@ tourSchema
 
 **Note**, you `can't` use virtual properties in `queries`.
 
-<!-- 104 -->
+## Document hooks
+`Mongo` has a concept of `hooks` which allows you to run actions before and after
+a certain event. There are four types of middleware in mongoose: 
+    1. document     3. aggregate
+    2. query        4. model
 
+Hook is to be defined `on the schema`.
 
+1. First type is `document hook`
+    It runs before `.save()` and `.create()` command,
+    but `not` for insertMany
+    
+    In the callback function you have access to `this` which points to the `document`
+    ```js
+    tourSchema.pre('save', function() {
+        console.log(this);
+    });
+    ```
+    
+    You can use this hook, to create a `slug` for example. Slug is a string that
+    you can put in the url, based on the name of the document.
+    
+    Finish result
+    ```js
+    tourSchema.pre('save', function(next) {
+        this.slug = slugify(this.name, {lower: true});
+        
+        next(); // don't forget to call next
+    });
 
+    tourSchema.post('save', function(doc, next) { // post(meaning after) hooks you have
+        console.log(`The result document : ${doc}`); // access to doc instead of "this"
+        
+        next();
+    });
+    ```
+    Document middleware can `also` run for validate, init and remove.
 
+2. Second type - `query middleware`, they allow us to run actions before/after
+    `a certain query` is executed. The difference between query and find hooks is in 
+    the string you are passing to the `pre/post` functions.
+    Now, `this` will point to the query, instead of the document.
+    ```js
+    tourSchema.pre('find', function(next) { // note pre('find', ...)
+        
+        next();
+    });
+    ```
+    
+    Imagine you want to create some "premium" tours that not everyone has access to.
+    You would create a special field in the Tour schema for that.
+    
+    As we have access to `this` which is the query object, we can pipe more methods to it.
+    ```js
+    tourSchema.pre('find', function(next) {
+        this.find({isSecret: {$eq: true}});
+        
+        next();
+    });
+    ```
+    **Note** although this hook works for `find` it doens't really work for any other 
+    method like "findOne" or "findMany" and you may want to fix this behaviour.
+    The best way to fix this is by using a `regular expression`.
+    
+    Find middleware can run for much more different queries, see the docs.
+    
+    **Note** in the post middleware you have access to `this` as well which points 
+    to the same document you had in "pre" hook, which allows you to do the following:
+    finish result
+    ```js
+    tourSchema.pre(/^find.*/, function(next) {
+        this.find({isSecret: {$ne: true}});
+        this.start = Date.now();                                // set the timer to this
+        
+        next();
+    });
 
+    tourSchema.post(/^find.*/, function(docs, next) {
+        console.log(`The result count - ${docs.length}`);
+        console.log(`Query took ${Date.now() - this.start} milliseconds!`); // get time
+        
+        next();
+    });
+    ```
 
+3. Third type - `aggregation middleware`
+    This type allows us to run hooks before or after `aggregation`
+    Using this hook you can decide for example which documents should take part
+    in aggregation and which shouldn't.
+    
+    In aggregation middlewre `this` points to the `aggregation object`.
+    For example you can exmine the aggregate pipeline with the method called `pipeline()`.
+    It returns you an `array of aggregation objects`.
+    
+    E.g you can add another aggregation object at the beginning with `unshift` or
+    at the end with `push`.
+    ```js
+    tourSchema.pre('aggregate', function(next) {
+        this.pipeline().unshift({$match: {isSecret: {$ne: true}}}); // adding another 
+        this.pipeline().pop(); // removing an aggr. obj             // aggregation obj.
+        console.log(this.pipeline());// see the pipeline
 
+        next(); // dont forget about NEXT
+    });
+    ```
 
+# Validation
+## Built-in
+1. `Validation` - checking that the input is in accordance to the schema.
+2. `Sanitization` - checking for malicious code in the input.
 
+Some `built-in` validators:
+```js
+// in a schema
+name: {
+    type: String,
+    trim: true,
+    maxlength: [40, 'A tour name must have less or equal than 40 characters'], // length
+    minlength: [10, 'A tour name must have more or equal than 10 characters'],
+},
 
+difficulty: {
+    enum: {                                                 // enum for strings
+        values:['easy', 'medium', 'difficult'],
+        message: 'Difficulty can only be easy, medium or difficult',
+    },
+},
+ratingsAverage: {
+    type: Number,
+    default: 3,
+    min: [1, 'Rating must be above or equal to 1.0'],       // max/min numbers
+    max: [5, 'Rating must be below or equal to 5.0']
+},
+```
 
+## Custom validators
+Validator is a function that returns a boolean.
+To specify a validator, use `validate` property of `options object`
+```js
+priceDiscount: {
+    type: Number,
+    validate: {
+        validator: function(value) {
+            // this is the doc (works only for NEW documents)
+            // fixing this is cumbersome and is not worth it
+            return value < this.price;
+        },
+        message: 'Discount price should be less than the price, current value - {VALUE}'
+    }
+},
+```
 
+Popular npm package for `string` validation is called `validator`.
 
+# Error handling with express >>>
+## Debugging node.js
+Google developed an npm package called `NBM`
+```
+npm i -g nbm
+```
+Then add new script to your `npm package`
+```json
+"debug": "ndb server.js"
+```
+ 
+This package opens your project in a special chrome-like window, in which
+you can make changes.
 
+1. Setting up `breakpoints`
+    1. In the window, click on a `line number`.
+    2. If the program has already gone pass this line you can right-click on the 
+        file and click `Run this script`
 
+2. Degugging piped functions
+    In order to debug a certain function in a pipeline of multiple functions 
+    you need to stop at the function call and then press `step`, wich will 
+    let you step into function call.
+    ```js
+    const tours = await resultQuery
+            .Filter()
+            .OnlyProperties()
+            .Pagination()
+            .Sort() // set breakpoint here to see what this function does.
+            .Result();
+    ```
 
+## Handling unhandled routes
+If you have defined routes without any action method, when you try to access the route
+you get an `error`. But the problem here is that the erorr is returned in the `html form`
 
+To fix this we need to create a route that will catch everything that `was not catched`
+by any other route. To do that we just have to create a route that will be executed
+`last`, that why we put it in the `bottom of` the middleware `pipeline`.
+```js
+app.all('*', (req, res, next) => {
+    res.status(404).json({
+        status: 'fail',
+        message: `Can't find ${req.originalUrl} on this server :(`
+    });
+});         // right before the export
 
+module.exports = app; 
+```
 
+## Overview
+Errors should be handled in some `central error handling place`.
 
+There are two types of errors: `Operational errors` and `Programming errors`.
+1. Operational errors
+    Problems that `we can predict` will happen, like 
+        - failed to connect to a db
+        - invalid user input
+        - invalid route access
+    There problems are `not` about `bugs in our code` but rather, bad external conditions.
+    (bad user, bad server, bad connection)
 
+2. Programming errors
+    Actual `bugs` that are difficult to track and debug.
+        - using wrong arguments
+        - null access
+        - fail to parse a value properly
+    
+Express allows you to easily catch and process `operational errors`, by using 
+an `error handling middleware` that will be responsible for catching all kinds
+of errors in your app from different places.
 
+This kind of error handling is nice as it allows you to `separate` error handling
+from actual business logic in your code.
 
-
+## Implementing global error handling middleware <113>
 
 
 
