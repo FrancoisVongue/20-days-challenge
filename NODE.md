@@ -425,7 +425,6 @@ npm i
     eslint-plugin-react -D
 ```
 
-
 # ▶ Day 2
 # Mongo
 `Collection` is like a "table" of data.
@@ -502,7 +501,7 @@ Collections can contain `documents` which represent "rows" in RDBs.
     
     Set accepts an object that may have multiple parameters.
     (in this case it has only one). If the object that is affected 
-    by the query doesn't have the property, it will be added.
+    by the query `doesn't have` the property, it will be `added`.
     
     `Why set`? Why not just pass an object? It's because `there are other`
     useful `operators` like increment, decrement, etc.
@@ -570,7 +569,7 @@ Collections can contain `documents` which represent "rows" in RDBs.
 ## Connect express to the mongoDB
 1. Go to the website
 2. Click cluster
-3. Click connect => connect your application
+3. Click connect => `connect your application`
 4. Copy the connection string and fill the dbname and password
     (or you can substitute the passwords `programmatically`)
 5. Create env var in config.env with the connection string
@@ -742,7 +741,7 @@ const getTour = (req, res) => {
     }
 };
 ```
-When you want to get `a single file` you should use `findById` as it's indexed
+When you want to get `a single file` you should always use `findById` as it's indexed
 and therefore `faster`. 
 
 ## Updating documents
@@ -767,7 +766,7 @@ const updateTour = async (req, res) => {
 **Note** it's simultaneously find and update : `findByIdAndUpdate` it `takes`
     - id
     - object with properties to set
-    - options object
+    - `options` object
 
 ## Deleting Documents
 ```js
@@ -777,7 +776,7 @@ const deleteTour = async (req, res) => {
 
         res.status(200).json({
             status: 'success',
-            data: tour
+            data: tour          // deleted tour, (no need to specify options)
         });
     } catch (e) {
         res.status(404).send("Not found");
@@ -791,7 +790,8 @@ const deleteTour = async (req, res) => {
 summary: {
     type: String,
     trim: true // automatically removes whitespace on the sides
-    required: [true, "Summary is requred"]
+    required: [true, "Summary is requred"] // plays the role of TUPLE
+    // lowercase: true, // automatically lowercases the input
 },
 createdAt: {
     type: Date,
@@ -809,11 +809,12 @@ const {Tour} = require('../../Models/Tour');
 const dotenv = require('dotenv');
 dotenv.config({ path: `${__dirname}/../../config.env` });
 
+// Connect to the database
 const mongoose = require('mongoose');
 const DBCS = process.env.DBSTRING.replace('<PASS>', process.env.DBPASS);
 
-mongoose.connect(DBCS, {
-    useNewUrlParser: true,
+mongoose.connect(DBCS, { 
+    useNewUrlParser: true, // db options
     useCreateIndex: true,
     useFindAndModify: false
 }).then(_ => {
@@ -1508,7 +1509,7 @@ from actual business logic in your code.
 # ▶ Day 6
 ## Implementing global error handling middleware 
 Express comes with error handlers out of the box. You just need to create an
-error handling middleware, this middleware has four arguments: error, res, req and next.
+error handling middleware, this middleware has `four` arguments: error, res, req and next.
 
 `But` when you have a single middleware for handling all types of errors, you
 can't know what `status code` should you send to the client.
@@ -1545,10 +1546,10 @@ But passing multiple properties to the error object may be cumbersome, so it mig
 be better to create `your own error class`.
 
 ## Creating a custom Error class and refactoring
-We need to create an error class that will exted the base Error class and have
+We need to create an error class that will extend the base Error class and have
 properties that we want. Also it should specify whether the error is `operational` or not.
 Because we don't want client to know about error that occured because of a bug in 
-our system, we only want to know what we have prepared for them and no more.
+our system, we only want to know what we have prepared for them and `no more`.
 
 This class should also allow us to capture the `stack trace` so that we could know 
 where the error happened.
@@ -1557,12 +1558,12 @@ where the error happened.
 ```js
 class AppError extends Error {
     constructor(message, statusCode) {
-        super(message);
+        super(message);                 // this property already exists on the base class
         this.statusCode = statusCode;
-        this.status = statusCode < 500 ? 'fail' : 'error';
+        this.status = statusCode < 500 ? 'failed' : 'server error';
         this.isOperational = true;
 
-        Error.captureStackTrace(this, this.constructor);
+        Error.captureStackTrace(this, this.constructor); // the way to capture the stack
     }
 }
 
@@ -1570,7 +1571,8 @@ module.exports = AppError;
 ```
 
 ```js
-//errorHandlir (teachert told me to put it in Actions)
+// You can put it inside actions. maybe?
+// it's an error handling action-middleware
 const errorHandler = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
@@ -1623,28 +1625,30 @@ module.exports = catchAsync;
 const createTour = async (req, res) => {
     const tour = await Tour.create(req.body); // note, no try/catch
     res.status(200).json({status: "success", data: tour});
+    // if an error occurs it will be handled by the catchAsync function
 };
 ```
 
 ## Adding 404 not found
-For now if something goes wrong we get 500 internale error. Which is not what we want.
+For now if something goes wrong we get 500 internal error. Which is not what we want.
 To make errors meaningful we need to `throw them inside our actions`.
 
 ```js
 // inside an Action method
 const tour = await Tour.findById(req.params.id);
-if(tour == null) {
+if(!tour) 
     throw new AppError(`Tour with id ${req.params.id} does not exist`, 404);
-}
 ```
 
 - **So, as of now** we have the following `architecture`:
-    1. We have async methods that throw `custom erorrs`.
+    1. We have async methods that throw `custom errors`.
     2. We have a wrapper method, which `modifies` every other async method
         in such a way that it `redirects` errors into some 
-        `central custom error handling middleware.`
-    3. We have custom middleware that handles custom errors the way we like it to.
+        `central custom error handling middleware.` by calling `next(err)` in `catch`
+    3. We have custom middleware that handles custom errors the way we like it to
+        in app.js
 
+<!-- here -->
 ## Errors in development vs production
 You probably want to see more meaningful errors when you develop the program and
 don't want the client to see the same errors in production.
@@ -1674,7 +1678,7 @@ const prodError = (err, res) => {
     if(err.isOperational){
         operError(err, res);
     } else {
-        console.error(err);
+        console.error(err);                 // we wanna see the error on our side
         res.status(err.statusCode).json({
             status: 'error',
             message: 'Something went wrong!'
@@ -1682,7 +1686,7 @@ const prodError = (err, res) => {
     }
 }
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => { // our errorn hadling middleware
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
@@ -1723,18 +1727,18 @@ const prodError = (err, res) => {
 You can get error `names` from docs or just by experimenting. 
 
 ## Handling "Duplicate field" error
-This will creates a little problem as it `doesn't have a name`.
+This will create a little problem as it `doesn't have a name`.
 It doesn't have a name because it isn't a mongoose error but rather 
 MongoDB error. So to identify the error we are going to use `code` property instead.
 
 So here we have done some little refactoring (switch true)
 ```js
-switch (true) {
+switch (true) { // use switch true noe
     case err.name == 'CastError':
         appError = new AppError(`Invalid ${err.path}: ${err.value}`, 400);
         return operError(appError, res);
         
-    case err.code == 11000:
+    case err.code == 11000: // check for err code instead of name
         let property = err.errmsg.split('"')[1]; // get the property
         appError = new AppError(`Duplicate property: ${property}`, 400);
         return operError(appError, res);
@@ -1753,7 +1757,7 @@ You wanna take these properties and create a single string out of it.
 ```js
 case err.name == 'ValidationError':
     let error = Object.values(err.errors) // get error messages for every property
-        .reduce((b,v) => b + v.message + ', ', ''); // and combine them
+        .reduce((b,v,i) => b + (i && ', ') + v.message, ''); // and combine them
     appError = new AppError(`Invalid input data: ${error}`, 400);
     return operError(appError, res);
 ```
@@ -1765,9 +1769,9 @@ Database is outside of your express app so no middleware will catch them.
 When your database doesn't work you get `unhandled promise rejection`, 
 which you can easily fix, by adding `.catch` to your mongoose connection.
 
-But you may want to handle this type of error `globally`.
+But you may want to handle other types of simillar errors `globally`.
 
-When an unhandled rejection happens, the process object emits an `event` called
+When an unhandled rejection happens, the `process` object emits an `event` called
 `UnhandledRejection`, so we can easily subscribe to the event and handle it 
 as it occurs.
 ```js
@@ -1778,8 +1782,8 @@ const server = app.listen(port, () => { // SAVE THE SERVER INTO A VARIABLE
 process.on('unhandledRejection', err => { // note 'unhandledRejection' and process.on
     console.error(err.name, err.message);
     console.log("Unhandled rejection! Shutting down the server...");
-    server.close(() => { // PROPER WAY OF CLOSING AN APP
-        process.exit(1); // givers server time to finish ongoing requests
+    server.close(() => { // PROPER WAY OF CLOSING AN APP on Rejected promise
+        process.exit(1); // gives server time to finish ongoing requests
     });
 });
 ```
@@ -1789,44 +1793,241 @@ this event listener.
 
 ## Errors outside of Express: Synchronous Rejections (Uncaught Exceptions)
 we can listen to `process.uncaughtException` this time, but everything else is 
-the same.
+the same, except that you don't need now to wait for the server to close.
 
 Although you do have these central error handling listeners, you `shouldn't rely on them`
 It's just there in case you missed something occasionally, but in general
 you should really `handle` error and not just rely on there listeners that
 will shut down your server.
 
-**Note** this synchronoue listener should be put on `top` of ther server.js file
+**Note** this `synchronous` listener should be put on `top` of the server.js file
 as it needs to listen `before` any error occurs.
 
-**Note** sync error that occur inside of express middleware are handled by
+**Note** sync error that occur `inside` of express `middleware` are handled by
 error handling middleware.
 
+# ▶ Day 7
+# Authentication, Authorization and Security >>>
+## Modelling Users
+Creating a user:
+```js
+const mongoose = require('mongoose');
+
+const userSchema = mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, 'Please, provide a name'],
+    },
+    email: {
+        type: String,
+        validate: {
+            validator(val) {
+                return val.match(/^.+@.+\.[a-z]{2}/);
+            },
+            message: 'Invalid email address!'
+        },
+        unique: true,
+        lowercase: true
+    },
+    photo: String,
+    password: {
+        type: String,
+        minlength: 8,
+        required: [true, 'Please, provide a password'],
+    },
+    passwordConfirm: String,
+});
+
+const User = mongoose.model('User', userSchema);
+module.exports = {User};
+```
+
+## Creating new users
+1. We need to create another actions class : `AuthActions`.
+
+```js
+// in UserRoute.js of Routes directory
+router.post('/signup', signUp); // signUp from AuthActions
+```
+
+```js
+// authActions.js in Actions directory
+const signUp = async (req, res, next) => {
+    const newUser = await User.create(req.body);
+
+    res.status(201).json({
+        status: 'success',
+        data: newUser,
+    });
+};
+
+module.exports = {
+    signUp: catchAsync(signUp),
+}
+```
+
+## Managing User passwords
+**Note** `Remember` `not` to use arrow functions in `validator` function in mongoose 
+schema.
+
+And `Remember` that `validator only runs` on save and create and not on update.
+```js
+// confirmPassword field validation
+validate: {
+    validator: function(field) {
+        return field == this.password;
+    },
+    message: 'Passwords are different!'
+}
+```
+
+You should `never` save passwords as is.
+
+If you want to stick to `fat model thin controller` philosophy, you should implement
+the password hashing functionality `on the model`
+
+Install `bcryptjs` npm package
+
+```js
+// mongoose hook on user scheme
+userSchema.pre('save', async function(next) {
+    if(!this.isModified('password'))      // check whether the field has been modified
+        return next();                    // to not to rehash the pass on UPDATE
+    else {
+        // bcrypt returns a promise
+        // 12 means how much computer power to waste on salting and encryption 
+        this.password = await bcrypt.hash(this.password, 12);
+        this.passwordConfirm = undefined; // delete this as we don't need it to persist, 
+        return next();                    // only to check on model creation
+    }
+});
+```
+
+## JWT token Auth basics
+1. There's `no need` to store `session state` on the server.
+
+Auth **workflow**
+1. User posts it's login and password
+2. JWT is created for the user if it passed validation on the server.
+3. Server sends JWT to the client
+4. Each time user wants to access a protected route, he supplies his token along with
+    the request.
+5. App verifies the token
+
+Note this communication `must` happen over `https` not http.
+
+JWT `consists of` three parts :
+    1. header
+        info about the JWT itself
+    2. payload
+        data that we can encode
+    3. signature
+        encoded string for verification
+        The `signing algorithm` takes the header, payload and `unique secret` to 
+        create a `unique signature` which is then passed together with
+        header and payload to verify them.
+    
+## Signing up Users
+Proper authorizatoin and authentication is important.
+`Passport` library may help you with this but you still need to be careful.
+
+`Preventing` users from setting the role:
+```js
+const userData = Object.entries(req.body)
+    .filter(v => v[1] != 'role')
+    .reduce((b, v) => (b[v[0]] = v[1], b), {});
+```
+
+`Automatically loggin a user`
+1. Install `jsonwebtoken` npm package
+```js
+const newUser = await User.create(userData);
+const token = jwt.sign(
+    {id: newUser._id},      // payload (user id)
+    process.env.JWT_SECRET, // secret (from env vars)
+    {
+        expiresIn: process.env.JWT_EXPIRATION // additional JWT options (expiration time)
+    }
+);
+
+res.status(201).json({
+    status: 'success',
+    token,                  // sending the toke back to the client in HEADERS
+    data: newUser,
+});
+
+// env vars
+JWT_SECRET=v10i0h2104v9ksad$d0fsd9fjkdsf%%df // note the secret should be 32+ characters
+JWT_EXPIRATION=90d  (or 50h, or whatever)    // you can specify expiration like this 
+```
+
+## Logging users IN
+1. We need to check that the user with the email exists
+2. Check that the password is correct
+3. Return token
+
+**Note**
+At this point when you return a user, you also return `it's hashed password`.
+Which is not a good practice. The hashed password should stay on ther server,
+user shoul only have the token.
+
+To fix this problem you can `just` set `select:false` option on the field.
+```js
+// on User model
+password: {
+    type: String,
+    //...
+    select: false       // prevents the property from showing up in Find* queries
+}
+```
+
+We want to check whether user provided the right password, 
+for that we are going to create an `instance method` on the User model.
+
+```js
+userSchema.methods.verifyPassword = async function(attempt, password) {
+    return await bcrypt.compare(attempt, password);
+} // please, note that this is an async method
+```
+
+`Loggin the user in`
+In some cases we want `password` for ourselves, not for the client 
+in this case we will have to `explicitly select` the property with `select('+prop')`
+```js
+const login = async (req, res) => {
+    const {email, password} = req.body; 
+    if(!email || !password)
+        throw new AppError(`Invalid credentials: you need to specify both password and login`,
+            400);
+    let user = await User
+        .findOne({email})
+        .select('+password'); // explicitly selecting the property
+    let correctPassword = user 
+        ? await user.verifyPassword(password, user.password) 
+        : false;
+
+    if(!user || !correctPassword)
+        throw new AppError(`Invalid credentials: invalid password or email`, 400);
+
+    const token = createToken({id: user._id});
+    res.status(201).json({
+        status: 'success',
+        token,
+        data: user,
+    });
+}
 
 
+// the createToken mehtod that was defined besides middlewares, as a supportive method
+const createToken = (payload) => {
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { // JWT config
+        expiresIn: process.env.JWT_EXPIRATION
+    });
+    return token;
+}
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## <30> Protecting Routes
 
 
 
